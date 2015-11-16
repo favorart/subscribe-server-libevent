@@ -1,13 +1,14 @@
 ﻿#include "stdafx.h"
-#include "cache_error.h"
-#include "cache.h"
+#include "subs_error.h"
+#include "subs.h"
 
 //-----------------------------------------
+// !!! <---
 void  signal_handler (int sig)
 {
   if ( sig == SIGINT )
   {
-    for ( wc_t i = 0; i < server_conf.workers; ++i )
+    for ( wc_t i = 0; i < server_conf.n_workers; ++i )
     { kill (server_conf.child_workers[i].pid, SIGTERM); }
     kill (getpid (), SIGTERM);
   }
@@ -60,14 +61,14 @@ int   set_nonblock (evutil_socket_t fd)
 #endif
 }
 //-----------------------------------------
-int   server_config_init  (srv_conf *conf, char *port, char *ip, char *work)
+int   server_config_init  (srv_conf *conf, char *port, char *ip,
+                           char  *workers, char *queues)
 {
   bool fail = false;
   //-----------------------
   const uint16_t  max_port = 65535U;
   if ( !port || (conf->port = atoi (port)) > max_port )
-  {
-    my_errno = SRV_ERR_INPUT;
+  { my_errno = SRV_ERR_INPUT;
     fprintf (stderr, "%s\n", strmyerror ());
     conf->port = 8080;
   }
@@ -75,8 +76,7 @@ int   server_config_init  (srv_conf *conf, char *port, char *ip, char *work)
   if ( ip && strlen (ip) < SRV_IPSTRLENGTH )
   { strcpy (conf->ip, ip); }
   else
-  {
-    my_errno = SRV_ERR_INPUT;
+  { my_errno = SRV_ERR_INPUT;
     fprintf (stderr, "%s\n", strmyerror ());
     strcpy (conf->ip, "0.0.0.0");
   }
@@ -85,32 +85,38 @@ int   server_config_init  (srv_conf *conf, char *port, char *ip, char *work)
   //-----------------------
   int  bytes = 0U;
   if ( 0 >= (bytes = readlink ("/proc/self/exe", conf->server_path, FILENAME_MAX - 1U)) )
-  {
-    fprintf (stderr, "%s\n", strerror (errno));
+  { fprintf (stderr, "%s\n", strerror (errno));
     strcpy (conf->server_path, "");
   }
   else conf->server_path[bytes] = '\0';
   //-----------------------
-  if ( work )
-  { conf->workers = atoi (work); }
+  if ( workers )
+  { conf->n_workers = atoi (workers); }
   else
-  { 
-    my_errno = SRV_ERR_INPUT;
+  { my_errno = SRV_ERR_INPUT;
     fprintf (stderr, "%s\n", strmyerror ());
-    conf->workers = 4U;
+    conf->n_workers = 4U;
+  }
+
+  if ( queues )
+  { conf->n_queues = atoi (queues); }
+  else
+  { my_errno = SRV_ERR_INPUT;
+    fprintf (stderr, "%s\n", strmyerror ());
+    conf->n_queues = 10U;
   }
   //-----------------------
-  if ( !(conf->child_workers = calloc (conf->workers, sizeof (*conf->child_workers))) )
+  if ( !(conf->child_workers = calloc (conf->n_workers, sizeof (*conf->child_workers))) )
   { perror ("child_workers");
     exit (EXIT_FAILURE);
   }
 
-  for ( wc_t i = 0U; i < conf->workers; ++i )
+  for ( wc_t i = 0U; i < conf->n_workers; ++i )
   {
     if ( !child_worker_init (&conf->child_workers[i]) )
     {
       conf->myself = &conf->child_workers[i];
-      conf->workers = (i + 1);
+      conf->n_workers = (i + 1);
       break;
     }
     else (conf->myself = NULL);
@@ -124,14 +130,15 @@ CONF_FREE:;
 }
 void  server_config_print (srv_conf *conf, FILE *stream)
 {
-  fprintf (stream, ">>> http server config:\n\n\tname: '%s'   server path: '%s'\n"
-                   "\tport: %u   ip: '%s'\n\n", conf->ptr_server_name,
-                   conf->server_path, conf->port, conf->ip);
+  fprintf (stream, ">>> http server config:\n\n\tname: '%s'\tserver path: '%s'\n"
+                   "\tport: %u\tip: '%s'\nworkers: %d\tqueues: %d\n\n",
+                   conf->ptr_server_name, conf->server_path,
+                   conf->port, conf->ip, conf->n_workers, conf->n_queues);
 }
 void  server_config_free  (srv_conf *conf)
 {
   //-----------------------
-  for ( wc_t i = 0U; i < conf->workers; ++i )
+  for ( wc_t i = 0U; i < conf->n_workers; ++i )
     child_worker_free (&conf->child_workers[i]);
   free (conf->child_workers);
   //-----------------------
@@ -141,10 +148,15 @@ void  server_config_free  (srv_conf *conf)
 #include <getopt.h>   /* for getopt_long finction */
 int   parse_console_parameters (int argc, char **argv, srv_conf *conf)
 {
-  char  *conf_opt = NULL;
+  char   *dir_opt = NULL,  *port_opt = NULL,   *ip_opt = NULL,
+        *work_opt = NULL, *queue_opt = NULL, *conf_opt = NULL;
   static struct option long_options[] =
-  {
-    { "conf", required_argument, 0, 'c' },
+  { {     "dir", required_argument, 0, 'd' },
+    {      "ip", required_argument, 0, 'h' },
+    {    "port", required_argument, 0, 'p' },
+    { "workers", required_argument, 0, 'w' },
+    {  "queues", required_argument, 0, 'q' },
+    {    "conf", required_argument, 0, 'c' },
     { 0, 0, 0, 0 }
   };
   //-----------------------
@@ -156,15 +168,34 @@ int   parse_console_parameters (int argc, char **argv, srv_conf *conf)
     {
       case 0:
         printf ("option %s", long_options[option_index].name);
+        if ( optarg )
+          printf (" with arg %s", optarg);
+        printf ("\n");
+        //-----------------------
+        switch ( option_index )
+        {
+          case 0:  dir_opt = optarg; break;
+          case 1:   ip_opt = optarg; break;
+          case 2: port_opt = optarg; break;
+          case 3: work_opt = optarg; break;
+          case 4:
+            printf ("using:\n\t./wwwd -d|--dir <dir> -h|--ip <ip> -p|--port <port>\n"
+                    "\t-w|--workers <num> -q|--queues <num> -c|--conf <conf>\n\n");
+            break;
+        }
         break;
 
-      case 'c':
-        conf_opt = optarg;
-        break;
+      case 'd':   dir_opt = optarg; break;
+      case 'h':    ip_opt = optarg; break;
+      case 'p':  port_opt = optarg; break;
+      case 'w':  work_opt = optarg; break;
+      case 'q': queue_opt = optarg; break;
+      case 'c':  conf_opt = optarg; break;
 
       case '?':
         /* getopt_long already printed an error message. */
-        printf ("using:\n./wwwd -c|--conf <conf>\n\n");
+        printf ("using:\n\t./wwwd -d|--dir <dir> -h|--ip <ip> -p|--port <port>\n"
+                "\t-w|--workers <num> -q|--queues <num> -c|--conf <conf>\n\n");
         break;
 
       default:
@@ -181,6 +212,7 @@ int   parse_console_parameters (int argc, char **argv, srv_conf *conf)
     printf ("\n");
   }
   //-----------------------
-  return  server_config_init (conf, NULL, NULL, NULL);
+  return  server_config_init (conf, dir_opt, ip_opt, port_opt,
+                                   work_opt, queue_opt);
 }
 //-----------------------------------------

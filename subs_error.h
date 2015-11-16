@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#ifndef _CACHE_ERROR_H_
-#define _CACHE_ERROR_H_
+#ifndef _SRV_ERROR_H_
+#define _SRV_ERROR_H_
 
 #define _DEBUG
 //-----------------------------------------
@@ -15,4 +15,4 @@ myerr my_errno;
 //-----------------------------------------
 const char*  strmyerror (void);
 //-----------------------------------------
-#endif // _CACHE_ERROR_H_
+#endif // _SRV_ERROR_H_

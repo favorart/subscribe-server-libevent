@@ -1,7 +1,7 @@
 ﻿#include "stdafx.h"
-#include "cache_error.h"
-#include "cache_hash.h"
-#include "cache.h"
+#include "subs_error.h"
+// #include "subs_hash.h"
+#include "subs.h"
 
 
 //-----------------------------------------
@@ -12,16 +12,19 @@ int main (int argc, char **argv)
   struct server_config  server_conf = { 0 };
   //-------------------------------------------
   /* Master Process */
-  server_conf.ht = malloc (sizeof (struct hash_table));
-  hashtable_init (server_conf.ht, CACHELINES, CACHE_SIZE);
+
+  // !!! INSERT INIT QUEUES
+  
+  // server_conf.ht = malloc (sizeof (struct hash_table));
+  // hashtable_init (server_conf.ht, CACHELINES, CACHE_SIZE);
   
   //-------------------------------------------
   /* Считывание конфигурации сервера с параметров командной строки */
-  // if ( parse_console_parameters (argc, argv, &server_conf) )
-  // { fprintf (stderr, "%s\n", strerror (errno));
-  //   result = 1;
-  //   goto MARK_FREE;
-  // }  
+  if ( parse_console_parameters (argc, argv, &server_conf) )
+  { fprintf (stderr, "%s\n", strerror (errno));
+    result = 1;
+    goto MARK_FREE;
+  }  
   server_config_init  (&server_conf, NULL, NULL, NULL);
   
   int  MasterSocket = -1;
@@ -94,7 +97,7 @@ int main (int argc, char **argv)
   {
     /* Create a new event, that react to read drom server's socket - event of connecting the new client */
     /* Set connection callback (on_connect()) to read event on server socket */
-    event_set (&ev, MasterSocket, EV_READ | EV_PERSIST, cache_accept_cb, &server_conf);
+    event_set (&ev, MasterSocket, EV_READ | EV_PERSIST, subs_accept_cb, &server_conf);
     /* Attach ev_connect event to my event base */
     event_base_set (server_conf.base, &ev);
     /* Add server event without timeout */
@@ -102,7 +105,7 @@ int main (int argc, char **argv)
   }
   else
   {
-    event_set (&ev, server_conf.myself->fd, EV_READ | EV_PERSIST, cache_connect_cb, &server_conf);
+    event_set (&ev, server_conf.myself->fd, EV_READ | EV_PERSIST, subs_connect_cb, &server_conf);
     event_base_set (server_conf.base, &ev);
     event_add (&ev, NULL);
   }
@@ -118,7 +121,9 @@ MARK_FREE:
   close    (MasterSocket);
   
   server_config_free (&server_conf);
-  hashtable_free (server_conf.ht);
+  
+  // !!! <---
+  //hashtable_free (server_conf.ht);
   //-------------------------------------------
   return result;
 }
