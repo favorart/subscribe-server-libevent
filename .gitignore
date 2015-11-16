@@ -229,3 +229,10 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+Subscribe.vcxproj.filters
+*.vcxproj
+*.vgdbsettings
+gcc_Debug.h
+*.mak
+gcc_Release.h
+Makefile
