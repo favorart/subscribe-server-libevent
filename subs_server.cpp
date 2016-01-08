@@ -157,7 +157,6 @@ void  subs_error_cb (struct bufferevent *b_ev, short events, void *arg)
 }
 void  subs_read_cb  (struct bufferevent *b_ev, void *arg)
 {
-
 #ifdef _DEBUG
   printf ("data reseived\n");
 #endif // _DEBUG
@@ -168,8 +167,7 @@ void  subs_read_cb  (struct bufferevent *b_ev, void *arg)
   struct evbuffer *buf_in  = bufferevent_get_input  (b_ev);
   struct evbuffer *buf_out = bufferevent_get_output (b_ev);
 
-  /* echo */
-  // evbuffer_add_buffer (buf_out, buf_in);
+  // evbuffer_add_buffer (buf_out, buf_in); /* echo */
 
   /* The main call */
   subscribe_handling (Client, buf_in, buf_out);

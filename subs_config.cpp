@@ -193,4 +193,3 @@ int   parse_console_parameters (int argc, char **argv, srv_conf *conf)
                                    work_opt, queue_opt);
 }
 //-----------------------------------------
-

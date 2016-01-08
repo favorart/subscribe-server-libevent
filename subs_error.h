@@ -3,7 +3,7 @@
 #ifndef _SRV_ERROR_H_
 #define _SRV_ERROR_H_
 
-#define _DEBUG
+// #define _DEBUG
 // #define MULTI_PROCESS
 //-----------------------------------------
 typedef enum

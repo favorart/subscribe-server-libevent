@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "subs_error.h"
 #include "subs_server.h"
 #include "subs_queues.h"
@@ -25,12 +25,12 @@ void  QueuesManager::broadcast (struct server_config *config)
   news_ = false;
 }
 //-----------------------------------------
-/*  Протокол:  publish <num> "message" || subscribe <num>
- *  Ответ:     ok <num> || error <err_text>
+/*  РџСЂРѕС‚РѕРєРѕР»:  publish <num> "message" || subscribe <num>
+ *  РћС‚РІРµС‚:     ok <num> || error <err_text>
  *  
- *  Есть сервер, у него есть N очередей сообщений.
- *  Есть сервер-клиент, который может положить сообщение на сервер в определённую очередь
- *  или подписаться на прослушивание очереди.
+ *  Р•СЃС‚СЊ СЃРµСЂРІРµСЂ, Сѓ РЅРµРіРѕ РµСЃС‚СЊ N РѕС‡РµСЂРµРґРµР№ СЃРѕРѕР±С‰РµРЅРёР№.
+ *  Р•СЃС‚СЊ СЃРµСЂРІРµСЂ-РєР»РёРµРЅС‚, РєРѕС‚РѕСЂС‹Р№ РјРѕР¶РµС‚ РїРѕР»РѕР¶РёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ РЅР° СЃРµСЂРІРµСЂ РІ РѕРїСЂРµРґРµР»С‘РЅРЅСѓСЋ РѕС‡РµСЂРµРґСЊ
+ *  РёР»Рё РїРѕРґРїРёСЃР°С‚СЊСЃСЏ РЅР° РїСЂРѕСЃР»СѓС€РёРІР°РЅРёРµ РѕС‡РµСЂРµРґРё.
  */
 void  subscribe_handling (client *Client, struct evbuffer *buf_in,
                                           struct evbuffer *buf_out)
@@ -53,7 +53,7 @@ void  subscribe_handling (client *Client, struct evbuffer *buf_in,
     size_t  queue_no = 0U;
     
     char cmd_head[10];
-    /* пробуем считать команду */
+    /* РїСЂРѕР±СѓРµРј СЃС‡РёС‚Р°С‚СЊ РєРѕРјР°РЅРґСѓ */
     if ( 1 == sscanf (cmd_cur_char, "%9s%n", cmd_head, &n) )
     {
       cmd_cur_char += n;
@@ -87,7 +87,7 @@ void  subscribe_handling (client *Client, struct evbuffer *buf_in,
       /* publish */
       else if ( !strncmp (cmd_head, cmd_pub, 7U) )
       {
-        /* пробуем считать параметры */
+        /* РїСЂРѕР±СѓРµРј СЃС‡РёС‚Р°С‚СЊ РїР°СЂР°РјРµС‚СЂС‹ */
         if ( 1 == sscanf (cmd_cur_char, "%u%n", &queue_no, &n) )
         {
           cmd_cur_char += n;
