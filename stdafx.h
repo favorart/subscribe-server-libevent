@@ -13,7 +13,9 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-// #include <arpa/inet.h>
+#include <arpa/inet.h>
+
+#include <signal.h>
 
 #include <unistd.h>
 #include <limits.h>
@@ -29,6 +31,13 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+
+#include <set>
+#include <list>
+#include <queue>
+#include <string>
+#include <vector>
+#include <algorithm>
 //-----------------------------------------
 #define SWAP(X,Y) \
     do { unsigned char _buf[sizeof (*(X))]; \
