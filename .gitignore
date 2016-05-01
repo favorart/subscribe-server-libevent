@@ -235,4 +235,3 @@ Subscribe.vcxproj.filters
 gcc_Debug.h
 *.mak
 gcc_Release.h
-Makefile
