@@ -1,6 +1,8 @@
-Запуск:
+# Publish-Subscribe server
+
+*Execute:*
 ./subs
-     -h / --ip      <ip>    // ip-адрес
-     -p / --port    <port>  // порт - целое число
-     -q / --queues  <num>   // количество очередей
+     -h / --ip      <ip>    // ip-adress
+     -p / --port    <port>  // integer
+     -q / --queues  <num>   // number of queues
      
