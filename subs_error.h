@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 #ifndef _SRV_ERROR_H_
 #define _SRV_ERROR_H_
